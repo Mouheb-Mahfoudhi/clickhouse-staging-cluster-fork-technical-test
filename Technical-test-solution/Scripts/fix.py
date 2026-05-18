@@ -41,7 +41,7 @@ def main():
 
     total = 0
     for db in DATABASES:
-        print(f"\n━━━ {db} ━━━")
+        print(f"\n -{db}-")
 
         result = q2(
             f"SELECT name FROM system.tables "
@@ -54,7 +54,7 @@ def main():
             continue
 
         for table in tables:
-            print(f"  → {table}", end="  ", flush=True)
+            print(f"{table}", end="  ", flush=True)
 
             uuid = q2(
                 f"SELECT uuid FROM system.tables "
