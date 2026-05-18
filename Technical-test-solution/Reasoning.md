@@ -153,7 +153,7 @@ last_queue_update_exception: Ok.
 
 | Signal | Meaning | Cause |
 |---|---|---|
-| `is_readonly=1, total_replicas≥1` | Keeper session lost — node knows its group but cannot write | Simple disconnect (Cause A) |
+| `is_readonly=1, total_replicas≥1` | Keeper session lost, node knows its group but cannot write | Simple disconnect (Cause A) |
 | `is_readonly=1, total_replicas=0` | **Node not registered in Keeper at all** | Path divergence (Cause B), confirmed |
 | `absolute_delay = 1.78B sec` | Never synced since table creation so not a transient lag | Rules out transient lag |
 
@@ -284,8 +284,6 @@ The restore procedure recovered only ch02's data volume. The Keeper volumes were
 
 ## 5. Repair Guide
 
-> Do not run `docker compose down`. All operations are performed on running containers. ch01 has no useful data (isolated since creation) so dropping tables on it is safe. ch02 data must not be touched.
-
 ### Phase 0  Prerequisite checks
 
 ```bash
@@ -348,8 +346,6 @@ docker exec ch02 clickhouse-client -q \
 #### Step A  Realign ch01 UUIDs to match ch02
 
 For each table across all 4 databases: read ch02's UUID, drop the orphaned table on ch01, recreate it with `UUID 'xxx'` matching ch02. ch01 now addresses the same Keeper path as ch02.
-
-> **Note on `FORMAT TSVRaw`:** ClickHouse's default HTTP response escapes newlines as `\n` and quotes as `\'`. Sending that string back as SQL causes `SYNTAX_ERROR` at position 57. `FORMAT TSVRaw` returns the raw unescaped DDL, which is valid SQL when sent directly.
 
 ```python
 #!/usr/bin/env python3
