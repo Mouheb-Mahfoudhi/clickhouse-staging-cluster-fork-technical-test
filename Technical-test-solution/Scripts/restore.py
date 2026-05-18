@@ -37,7 +37,7 @@ def main():
 
     total = 0
     for db in DATABASES:
-        print(f"\n━━━ {db} ━━━")
+        print(f"\n -{db}-")
         tables = q2(
             f"SELECT name FROM system.tables "
             f"WHERE database = '{db}' AND engine LIKE 'Replicated%'"
@@ -68,9 +68,9 @@ def main():
                     print(err.response_text)
                     sys.exit(1)
             else:
-                print(f"  → SKIP {table} (replica is writable, no RESTORE needed)")
+                print(f" SKIP {table} (replica is writable, no RESTORE needed)")
 
-    print(f"\n Restored {total} replicas. Checking status...\n")
+    print(f"\n Restored {total} replicas. Checking status:\n")
 
     status = q1(
         "SELECT database, table, is_readonly, active_replicas, total_replicas "
