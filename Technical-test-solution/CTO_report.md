@@ -7,7 +7,7 @@ The ClickHouse staging cluster (master-master, 2 nodes, 3-node Keeper quorum) ex
 ### Operational Impact
 
 - **Total replication halt** : All 88+ tables across both nodes in readonly mode. No INSERT could be confirmed as replicated.
-- **Inconsistent reads** : ch01 and ch02 held independent, diverged datasets. Any query load-balanced across both nodes would return inconsistent results.
+- **Inconsistent reads** : ch01 and ch02 held independent, diverged datasets. Any query across both nodes would return inconsistent results.
 - **No failover possible** : ch01 could not serve as a standby for ch02.
 
 ### Confirmed Technical Cause
