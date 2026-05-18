@@ -12,8 +12,15 @@
 ---
 
 ## 1. Architecture Overview
-> **Screenshot placeholder — system.replicas output on ch01**
-> `![system.replicas ch01](screenshots/ch01_replicas_state.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/1.png" width="700"/>
+</p>
+<p align="center">
+  <img src="../Technical-test-screenshots/2.png" width="700"/>
+</p>
+<p align="center">
+  <img src="../Technical-test-screenshots/3.png" width="700"/>
+</p>
 
 ### 1.1  Cluster overview
 $screenshots
@@ -99,8 +106,9 @@ A crashed container would explain everything without the need to investigate fur
 ```bash
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
-> **Screenshot placeholder — system.replicas output on ch01**
-> `![system.replicas ch01](screenshots/ch01_replicas_state.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/4.png" width="700"/>
+</p>
 
 **Result:** All 5 containers running. The failure is not a crashed process. I'll move into investigation other possibilities
 
@@ -134,9 +142,12 @@ total_replicas:              0
 absolute_delay:              1779053369
 last_queue_update_exception: Ok.
 ```
-
-> **Screenshot placeholder — system.replicas output on ch01**
-> `![system.replicas ch01](screenshots/ch01_replicas_state.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/5.png" width="700"/>
+</p>
+<p align="center">
+  <img src="../Technical-test-screenshots/6.png" width="700"/>
+</p>
 
 **Interpretation:**
 
@@ -195,10 +206,12 @@ WHERE database = 'reporting_shop1_green'
 FORMAT Vertical;
 ```
 
-> **Screenshot placeholder — UUID comparison ch01 vs ch02**
-> `![UUID mismatch ch01 vs ch02](screenshots/uuid_comparison.png)`
-> **Screenshot placeholder — UUID comparison ch01 vs ch02**
-> `![UUID mismatch ch01 vs ch02](screenshots/uuid_comparison.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/7.png" width="700"/>
+</p>
+<p align="center">
+  <img src="../Technical-test-screenshots/8.png" width="700"/>
+</p>
 
 **Actual output (selected rows):**
 
@@ -225,7 +238,7 @@ engine:   ReplicatedMergeTree
 | Cause | Test | Result |
 |---|---|---|
 | Keeper connection lost (simple disconnect) | `total_replicas` from `system.replicas` | Eliminated  `total_replicas=0`, not 1 |
-| Wrong ZooKeeper path (UUID mismatch) | UUID comparison across nodes | **Confirmed — every UUID differs** |
+| Wrong ZooKeeper path (UUID mismatch) | UUID comparison across nodes | **Confirmed  every UUID differs** |
 | Bad interserver hostname | `nc -zv` to all Keepers from ch01 | Eliminated  all reachable |
 | Incorrect `macros.xml` | File inspection — both nodes | Eliminated  macros correct and unique |
 | Non-replicated engine | DDL comparison | Eliminated  both `ReplicatedMergeTree` |
@@ -243,10 +256,9 @@ replica_path=/clickhouse/tables/39bc2e4a-21f8-4d48-be16-1a4252f53bec/1/replicas/
 While executing WaitForAsyncInsert. (TABLE_IS_READ_ONLY)
 ```
 
-The Keeper error message confirms: `replica_path` — ch02's own UUID — does not exist in Keeper. Both nodes have correct UUIDs on disk but the Keeper state machine has no record of any replica for any table. The Keeper volumes were not restored alongside the ch02 data volume.
+The Keeper error message confirms: `replica_path`  ch02's own UUID does not exist in Keeper. Both nodes have correct UUIDs on disk but the Keeper state machine has no record of any replica for any table. The Keeper volumes were not restored alongside the ch02 data volume.
 
-> **Screenshot placeholder — ch02 INSERT readonly error**
-> `![ch02 readonly error on INSERT](screenshots/ch02_readonly_error.png)`
+
 
 ---
 
@@ -258,8 +270,8 @@ The Keeper error message confirms: `replica_path` — ch02's own UUID — does n
 
 The engine string `ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}')` is identical on both nodes, but `{uuid}` is expanded at runtime using the table's own UUID. Because the tables on ch01 and ch02 were created in separate, independent operations, every table received a different UUID.
 
-- ch01's `variant_week` → Keeper path `/clickhouse/tables/83c2b628-.../1`
-- ch02's `variant_week` → Keeper path `/clickhouse/tables/39bc2e4a-.../1`
+- ch01's `variant_week` -> Keeper path `/clickhouse/tables/83c2b628-.../1`
+- ch02's `variant_week` -> Keeper path `/clickhouse/tables/39bc2e4a-.../1`
 
 These are two completely separate entries in Keeper. Neither node knows the other exists. Not one UUID matched out of 88+ tables across 4 databases.
 
@@ -311,8 +323,8 @@ docker exec ch02 clickhouse-client -q \
   "SELECT uuid FROM system.tables
    WHERE database='reporting_shop1_green' AND name='variant_week'"
 
-# If UUIDs differ → proceed to Phase 2
-# If UUIDs match → the problem is not UUID mismatch, do not proceed
+# If UUIDs differ -> proceed to Phase 2
+# If UUIDs match -> the problem is not UUID mismatch, do not proceed
 ```
 
 **1.3  Confirm Keeper has no registration**
@@ -324,6 +336,10 @@ docker exec ch02 clickhouse-client -q \
    WHERE path='/clickhouse/tables'
    FORMAT Vertical"
 ```
+
+<p align="center">
+  <img src="../Technical-test-screenshots/9.png" width="700"/>
+</p>
 
 ---
 
@@ -397,8 +413,13 @@ pip install requests
 python3 fix.py
 ```
 
-> **Screenshot placeholder — fix_uuids.py execution output**
-> `![UUID fix script output](screenshots/fix_uuids_output.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/10.png" width="700"/>
+</p>
+
+<p align="center">
+  <img src="../Technical-test-screenshots/11.png" width="700"/>
+</p>
 
 ---
 
@@ -455,8 +476,13 @@ if __name__ == "__main__":
 python3 restore.py
 ```
 
-> **Screenshot placeholder — restore_keeper.py execution output**
-> `![Restore Keeper script output](screenshots/restore_keeper_output.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/12.png" width="700"/>
+</p>
+
+<p align="center">
+  <img src="../Technical-test-screenshots/13.png" width="700"/>
+</p>
 
 ---
 
@@ -478,8 +504,9 @@ docker exec ch01 clickhouse-client -q \
 -- absolute_delay:  decreasing toward 0
 ```
 
-> **Screenshot placeholder — final replica state**
-> `![Final replica state ch01](screenshots/final_replicas_state.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/14.png" width="700"/>
+</p>
 
 **3.3  Trying a live replication check**
 
@@ -500,9 +527,13 @@ docker exec ch01 clickhouse-client -q \
    WHERE Client = 'replication-test'"
 # Expected: 1 row returned — replication confirmed end to end
 ```
+<p align="center">
+  <img src="../Technical-test-screenshots/15.png" width="700"/>
+</p>
 
-> **Screenshot placeholder — live replication test result**
-> `![Live replication test](screenshots/live_replication_test.png)`
+<p align="center">
+  <img src="../Technical-test-screenshots/17.png" width="700"/>
+</p>
 
 ---
 
